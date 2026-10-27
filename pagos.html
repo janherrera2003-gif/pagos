@@ -317,11 +317,11 @@
       <section id="vista-app" class="oculto">
         <div class="caja resumen">
           <div>
-            <small>Apartar cada viernes</small>
-            <strong id="total-viernes">₡0</strong>
+            <small>Apartar por semana</small>
+            <strong id="total-semana">₡0</strong>
           </div>
           <div>
-            <small>Pagos del mes</small>
+            <small>Al mes (4 semanas)</small>
             <strong id="total-mes">₡0</strong>
           </div>
         </div>
@@ -335,20 +335,8 @@
             <label for="pago-nombre">¿Qué es? (luz, alquiler, ahorro...)</label>
             <input type="text" id="pago-nombre" maxlength="40" autocomplete="off">
 
-            <label for="pago-monto">Cuánto pagas al mes (₡)</label>
-            <input type="tel" id="pago-monto" inputmode="numeric" maxlength="9" placeholder="0" autocomplete="off">
-
-            <label for="pago-dia">¿Qué día del mes lo pagas? (te aviso el día antes)</label>
-            <input type="tel" id="pago-dia" inputmode="numeric" maxlength="2" placeholder="Ej: 5" autocomplete="off">
-
-            <label for="pago-viernes">Cuánto apartar cada viernes (₡)</label>
-            <input type="tel" id="pago-viernes" inputmode="numeric" maxlength="9" placeholder="0" autocomplete="off">
-
-            <label for="pago-sacar">¿Desde qué día quieres empezar a sacar el dinero? (opcional)</label>
-            <input type="tel" id="pago-sacar" inputmode="numeric" maxlength="2" placeholder="Ej: 25" autocomplete="off">
-
-            <label for="pago-mensaje">Tu mensaje para ese día (opcional)</label>
-            <input type="text" id="pago-mensaje" maxlength="120" placeholder="Ej: Saca ₡6 000 para la luz" autocomplete="off">
+            <label for="pago-semana">Cuánto apartas por semana (₡)</label>
+            <input type="tel" id="pago-semana" inputmode="numeric" maxlength="9" placeholder="0" autocomplete="off">
 
             <p id="error-pago" class="error oculto"></p>
             <button type="submit" class="boton" id="boton-guardar">Guardar</button>
@@ -358,7 +346,7 @@
           </form>
         </div>
 
-        <p class="nota-suave">Los avisos por Telegram llegan a las 8:00 a. m.: los viernes, el día 1 de cada mes, el día antes de cada pago y el día que elijas para sacar el dinero.</p>
+        <p class="nota-suave">Cada jueves a las 7:00 p. m. te llega por Telegram cuánto sacar esa semana. El día 1 de cada mes te llega el total de las 4 semanas.</p>
       </section>
 
       <div id="pie-sesion" class="oculto">
@@ -374,7 +362,7 @@
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZnaHd6ZnVldnphemlzZmR4bWRrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwNjQ5NjYsImV4cCI6MjEwODY0MDk2Nn0.qT7DdL8tS4GhS7phiEm-ZGeFw4-M51nj_e-TWj2Fgw8";
     const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    const VIERNES_POR_MES = 52 / 12; // un mes tiene unos 4,33 viernes
+    const SEMANAS_POR_MES = 4; // el aviso del mes siempre suma 4 semanas
 
     let pagos = [];
     let editando = null; // id del pago que se está editando
@@ -392,16 +380,10 @@
       return d.innerHTML;
     }
 
-    // Deja solo números enteros en un campo
-    function soloNumeros(id, largo) {
-      el(id).addEventListener("input", function () {
-        this.value = this.value.replace(/\D/g, "").slice(0, largo);
-      });
-    }
-    soloNumeros("pago-monto", 9);
-    soloNumeros("pago-dia", 2);
-    soloNumeros("pago-sacar", 2);
-    soloNumeros("pago-viernes", 9);
+    // Solo números enteros en el monto
+    el("pago-semana").addEventListener("input", function () {
+      this.value = this.value.replace(/\D/g, "").slice(0, 9);
+    });
 
     function mostrarLogin() {
       el("vista-login").classList.remove("oculto");
@@ -446,12 +428,11 @@
       const info = el("estado-lista");
       info.textContent = "Cargando...";
       const res = await db.from("pagos").select("*").eq("activo", true)
-        .order("dia_pago", { ascending: true, nullsFirst: false })
         .order("nombre", { ascending: true });
 
       if (res.error) {
         console.error(res.error);
-        info.textContent = "No se pudieron cargar tus pagos. ¿Ya corriste el SQL en Supabase?";
+        info.textContent = "No se pudieron cargar tus pagos.";
         el("lista-pagos").innerHTML = "";
         return;
       }
@@ -460,10 +441,9 @@
     }
 
     function dibujar() {
-      const totalViernes = pagos.reduce(function (s, p) { return s + p.apartar_viernes; }, 0);
-      const totalMes = pagos.reduce(function (s, p) { return s + p.monto_mensual; }, 0);
-      el("total-viernes").textContent = dinero(totalViernes);
-      el("total-mes").textContent = dinero(totalMes);
+      const totalSemana = pagos.reduce(function (s, p) { return s + p.apartar_viernes; }, 0);
+      el("total-semana").textContent = dinero(totalSemana);
+      el("total-mes").textContent = dinero(totalSemana * SEMANAS_POR_MES);
 
       const info = el("estado-lista");
       if (pagos.length === 0) {
@@ -474,30 +454,13 @@
       info.textContent = "";
 
       el("lista-pagos").innerHTML = pagos.map(function (p) {
-        const dia = p.dia_pago ? " · día " + p.dia_pago : "";
-        const sacar = p.dia_sacar
-          ? '<br>Empiezas a sacar el dinero el día <strong>' + p.dia_sacar + '</strong>' + (p.mensaje_sacar ? ': «' + escapar(p.mensaje_sacar) + '»' : "")
-          : "";
-        let nota = "";
-        if (p.monto_mensual > 0 && p.apartar_viernes > 0) {
-          const junta = Math.round(p.apartar_viernes * VIERNES_POR_MES);
-          const falta = p.monto_mensual - junta;
-          nota = falta > 0
-            ? '<p class="pago-nota falta">Apartando eso juntas unos ' + dinero(junta) + ' al mes; te faltarían unos ' + dinero(falta) + '.</p>'
-            : '<p class="pago-nota">Apartando eso juntas unos ' + dinero(junta) + ' al mes: alcanza.</p>';
-        }
         return `
           <article class="caja">
             <div class="pago-cab">
               <strong>${escapar(p.nombre)}</strong>
-              <span>${p.monto_mensual > 0 ? dinero(p.monto_mensual) : "—"}</span>
+              <span>${dinero(p.apartar_viernes)} <small style="font-size:12px;color:var(--suave)">/ semana</small></span>
             </div>
-            <p class="pago-datos">
-              Pago mensual${dia}<br>
-              Apartar cada viernes: <strong>${dinero(p.apartar_viernes)}</strong>
-              ${sacar}
-            </p>
-            ${nota}
+            <p class="pago-datos">Al mes (4 semanas): <strong>${dinero(p.apartar_viernes * SEMANAS_POR_MES)}</strong></p>
             <div class="acciones">
               <button class="mini" data-id="${escapar(p.id)}" data-accion="editar">Editar</button>
               <button class="mini gris" data-id="${escapar(p.id)}" data-accion="borrar">Eliminar</button>
@@ -515,11 +478,7 @@
       if (b.dataset.accion === "editar") {
         editando = p.id;
         el("pago-nombre").value = p.nombre;
-        el("pago-monto").value = p.monto_mensual || "";
-        el("pago-dia").value = p.dia_pago || "";
-        el("pago-viernes").value = p.apartar_viernes || "";
-        el("pago-sacar").value = p.dia_sacar || "";
-        el("pago-mensaje").value = p.mensaje_sacar || "";
+        el("pago-semana").value = p.apartar_viernes || "";
         el("titulo-form").textContent = "Editar: " + p.nombre;
         el("boton-guardar").textContent = "Guardar cambios";
         el("cancelar-edicion").classList.remove("oculto");
@@ -551,25 +510,15 @@
       e.preventDefault();
       const error = el("error-pago");
       const nombre = el("pago-nombre").value.trim();
-      const monto = parseInt(el("pago-monto").value, 10) || 0;
-      const viernes = parseInt(el("pago-viernes").value, 10) || 0;
-      const diaTxt = el("pago-dia").value;
-      const dia = diaTxt === "" ? null : parseInt(diaTxt, 10);
-      const sacarTxt = el("pago-sacar").value;
-      const sacar = sacarTxt === "" ? null : parseInt(sacarTxt, 10);
-      const mensaje = el("pago-mensaje").value.trim();
+      const semana = parseInt(el("pago-semana").value, 10) || 0;
 
       function fallo(txt) { error.textContent = txt; error.classList.remove("oculto"); }
 
       if (!nombre) return fallo("Escribe qué es el pago.");
-      if (monto === 0 && viernes === 0) return fallo("Pon cuánto pagas al mes o cuánto apartar cada viernes.");
-      if (monto > 0 && dia === null) return fallo("¿Qué día del mes lo pagas? Lo necesito para avisarte el día antes.");
-      if (dia !== null && (dia < 1 || dia > 31)) return fallo("El día de pago debe estar entre 1 y 31.");
-      if (sacar !== null && (sacar < 1 || sacar > 31)) return fallo("El día para sacar el dinero debe estar entre 1 y 31.");
-      if (mensaje && sacar === null) return fallo("Para usar tu mensaje, elige desde qué día quieres el aviso.");
+      if (semana <= 0) return fallo("Escribe cuánto apartas por semana.");
       error.classList.add("oculto");
 
-      const fila = { nombre: nombre, monto_mensual: monto, dia_pago: dia, apartar_viernes: viernes, dia_sacar: sacar, mensaje_sacar: mensaje || null };
+      const fila = { nombre: nombre, apartar_viernes: semana, monto_mensual: 0, dia_pago: null, dia_sacar: null, mensaje_sacar: null };
       const boton = el("boton-guardar");
       boton.disabled = true;
       const res = editando
