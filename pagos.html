@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="robots" content="noindex">
+  <meta name="color-scheme" content="dark">
+  <link rel="manifest" href="pagos.webmanifest">
+  <link rel="apple-touch-icon" href="apple-touch-pagos.png">
+  <link rel="icon" type="image/png" href="icon-pagos-192.png">
+  <meta name="theme-color" content="#0e0f13">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Mis pagos">
+  <title>Mis pagos</title>
+  <style>
+    :root {
+      --fondo: #0e0f13;
+      --superficie: #15171c;
+      --borde: #252831;
+      --texto: #e9e6df;
+      --suave: #8d919b;
+      --dorado: #c9a96e;
+      --dorado-oscuro: #14110a;
+      --verde: #86b595;
+      --ambar: #d3a65e;
+      --serif: ui-serif, "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+      --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { -webkit-text-size-adjust: 100%; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--fondo);
+      color: var(--texto);
+      font-family: var(--sans);
+      font-size: 16px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      padding: env(safe-area-inset-top) 20px env(safe-area-inset-bottom);
+    }
+
+    .oculto { display: none !important; }
+
+    .contenedor {
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    /* ---------- Encabezado ---------- */
+    header {
+      padding: 44px 0 26px;
+    }
+
+    header h1 {
+      margin: 0;
+      font-family: var(--serif);
+      font-weight: 400;
+      font-size: 32px;
+      letter-spacing: 0.01em;
+    }
+
+    .lema {
+      margin: 6px 0 0;
+      font-size: 12px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--suave);
+    }
+
+    h2 {
+      margin: 0 0 18px;
+      font-family: var(--serif);
+      font-weight: 400;
+      font-size: 22px;
+    }
+
+    /* ---------- Tarjetas ---------- */
+    .caja {
+      background: var(--superficie);
+      border: 1px solid var(--borde);
+      border-radius: 18px;
+      padding: 20px;
+      margin: 0 0 14px;
+    }
+
+    .caja h3 {
+      margin: 0 0 16px;
+      font-family: var(--serif);
+      font-weight: 400;
+      font-size: 19px;
+    }
+
+    .resumen {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      padding: 22px 0;
+    }
+
+    .resumen > div {
+      text-align: center;
+      padding: 0 12px;
+    }
+
+    .resumen > div + div {
+      border-left: 1px solid var(--borde);
+    }
+
+    .resumen small {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--suave);
+    }
+
+    .resumen strong {
+      font-family: var(--serif);
+      font-weight: 400;
+      font-size: 26px;
+      color: var(--dorado);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .vacio {
+      text-align: center;
+      color: var(--suave);
+      font-size: 14px;
+      margin: 18px 0;
+    }
+
+    /* ---------- Pagos ---------- */
+    .pago-cab {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+    }
+
+    .pago-cab strong {
+      font-weight: 500;
+      font-size: 17px;
+    }
+
+    .pago-cab span {
+      font-family: var(--serif);
+      font-size: 19px;
+      color: var(--dorado);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .pago-datos {
+      margin: 10px 0 0;
+      color: var(--suave);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .pago-datos strong {
+      color: var(--texto);
+      font-weight: 500;
+    }
+
+    .pago-nota {
+      position: relative;
+      margin: 12px 0 0;
+      padding-left: 16px;
+      font-size: 13px;
+      color: var(--verde);
+    }
+
+    .pago-nota::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0.5em;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .pago-nota.falta { color: var(--ambar); }
+
+    .acciones {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    /* ---------- Botones ---------- */
+    .boton {
+      display: block;
+      width: 100%;
+      margin-top: 8px;
+      padding: 14px 20px;
+      border: none;
+      border-radius: 12px;
+      background: var(--dorado);
+      color: var(--dorado-oscuro);
+      font: inherit;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+    }
+
+    .boton:active { opacity: 0.85; }
+    .boton:disabled { opacity: 0.5; }
+
+    .mini {
+      flex: 1;
+      padding: 10px 14px;
+      border: 1px solid var(--dorado);
+      border-radius: 10px;
+      background: transparent;
+      color: var(--dorado);
+      font: inherit;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .mini.gris {
+      border-color: var(--borde);
+      color: var(--suave);
+    }
+
+    .mini:disabled { opacity: 0.5; }
+
+    /* ---------- Formularios ---------- */
+    label {
+      display: block;
+      margin: 0 0 6px;
+      font-size: 13px;
+      color: var(--suave);
+    }
+
+    input[type="text"],
+    input[type="tel"],
+    input[type="email"],
+    input[type="password"] {
+      display: block;
+      width: 100%;
+      margin: 0 0 16px;
+      padding: 13px 14px;
+      background: var(--fondo);
+      color: var(--texto);
+      border: 1px solid var(--borde);
+      border-radius: 10px;
+      font: inherit;
+      font-size: 16px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    input:focus { border-color: var(--dorado); }
+
+    input::placeholder { color: #565a64; }
+
+    .error {
+      margin: 0 0 12px;
+      font-size: 14px;
+      color: #e08a82;
+    }
+
+    .nota-suave {
+      margin: 24px 0 0;
+      text-align: center;
+      font-size: 12px;
+      line-height: 1.6;
+      color: #666a74;
+    }
+
+    #pie-sesion {
+      text-align: center;
+      margin: 80px 0 40px;
+    }
+
+    #cerrar-sesion {
+      background: none;
+      border: none;
+      color: #666a74;
+      font: inherit;
+      font-size: 12px;
+      text-decoration: underline;
+      cursor: pointer;
+      padding: 10px 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="contenedor">
+    <header>
+      <h1>Mis pagos</h1>
+      <p class="lema">Apartar y pagar a tiempo</p>
+    </header>
+
+    <main>
+      <!-- Acceso -->
+      <section id="vista-login" class="oculto">
+        <div class="caja">
+          <h3>Entrar</h3>
+          <form id="form-login">
+            <input type="email" id="correo" placeholder="Correo" autocomplete="username">
+            <input type="password" id="clave" placeholder="Contraseña" autocomplete="current-password">
+            <p id="error-login" class="error oculto"></p>
+            <button type="submit" class="boton">Entrar</button>
+          </form>
+        </div>
+      </section>
+
+      <!-- App -->
+      <section id="vista-app" class="oculto">
+        <div class="caja resumen">
+          <div>
+            <small>Apartar cada viernes</small>
+            <strong id="total-viernes">₡0</strong>
+          </div>
+          <div>
+            <small>Pagos del mes</small>
+            <strong id="total-mes">₡0</strong>
+          </div>
+        </div>
+
+        <p id="estado-lista" class="vacio"></p>
+        <div id="lista-pagos"></div>
+
+        <div class="caja">
+          <h3 id="titulo-form">Agregar un pago</h3>
+          <form id="form-pago">
+            <label for="pago-nombre">¿Qué es? (luz, alquiler, ahorro...)</label>
+            <input type="text" id="pago-nombre" maxlength="40" autocomplete="off">
+
+            <label for="pago-monto">Cuánto pagas al mes (₡)</label>
+            <input type="tel" id="pago-monto" inputmode="numeric" maxlength="9" placeholder="0" autocomplete="off">
+
+            <label for="pago-dia">¿Qué día del mes lo pagas? (te aviso el día antes)</label>
+            <input type="tel" id="pago-dia" inputmode="numeric" maxlength="2" placeholder="Ej: 5" autocomplete="off">
+
+            <label for="pago-viernes">Cuánto apartar cada viernes (₡)</label>
+            <input type="tel" id="pago-viernes" inputmode="numeric" maxlength="9" placeholder="0" autocomplete="off">
+
+            <label for="pago-sacar">¿Desde qué día quieres empezar a sacar el dinero? (opcional)</label>
+            <input type="tel" id="pago-sacar" inputmode="numeric" maxlength="2" placeholder="Ej: 25" autocomplete="off">
+
+            <label for="pago-mensaje">Tu mensaje para ese día (opcional)</label>
+            <input type="text" id="pago-mensaje" maxlength="120" placeholder="Ej: Saca ₡6 000 para la luz" autocomplete="off">
+
+            <p id="error-pago" class="error oculto"></p>
+            <button type="submit" class="boton" id="boton-guardar">Guardar</button>
+            <div class="acciones">
+              <button type="button" class="mini gris oculto" id="cancelar-edicion">Cancelar edición</button>
+            </div>
+          </form>
+        </div>
+
+        <p class="nota-suave">Los avisos por Telegram llegan a las 8:00 a. m.: los viernes, el día 1 de cada mes, el día antes de cada pago y el día que elijas para sacar el dinero.</p>
+      </section>
+
+      <div id="pie-sesion" class="oculto">
+        <button id="cerrar-sesion">Cerrar sesión</button>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    // ---------- Configuración ----------
+    const SUPABASE_URL = "https://vghwzfuevzazisfdxmdk.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZnaHd6ZnVldnphemlzZmR4bWRrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwNjQ5NjYsImV4cCI6MjEwODY0MDk2Nn0.qT7DdL8tS4GhS7phiEm-ZGeFw4-M51nj_e-TWj2Fgw8";
+    const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    const VIERNES_POR_MES = 52 / 12; // un mes tiene unos 4,33 viernes
+
+    let pagos = [];
+    let editando = null; // id del pago que se está editando
+
+    // ---------- Utilidades ----------
+    function el(id) { return document.getElementById(id); }
+
+    function dinero(n) {
+      return "₡" + Math.round(Number(n)).toLocaleString("es-CR");
+    }
+
+    function escapar(texto) {
+      const d = document.createElement("div");
+      d.textContent = texto == null ? "" : String(texto);
+      return d.innerHTML;
+    }
+
+    // Deja solo números enteros en un campo
+    function soloNumeros(id, largo) {
+      el(id).addEventListener("input", function () {
+        this.value = this.value.replace(/\D/g, "").slice(0, largo);
+      });
+    }
+    soloNumeros("pago-monto", 9);
+    soloNumeros("pago-dia", 2);
+    soloNumeros("pago-sacar", 2);
+    soloNumeros("pago-viernes", 9);
+
+    function mostrarLogin() {
+      el("vista-login").classList.remove("oculto");
+      el("vista-app").classList.add("oculto");
+      el("pie-sesion").classList.add("oculto");
+    }
+
+    function mostrarApp() {
+      el("vista-login").classList.add("oculto");
+      el("vista-app").classList.remove("oculto");
+      el("pie-sesion").classList.remove("oculto");
+      cargarPagos();
+    }
+
+    // ---------- Acceso ----------
+    el("form-login").addEventListener("submit", async function (e) {
+      e.preventDefault();
+      const error = el("error-login");
+      error.classList.add("oculto");
+      const res = await db.auth.signInWithPassword({
+        email: el("correo").value.trim(),
+        password: el("clave").value
+      });
+      if (res.error) {
+        error.textContent = "Correo o contraseña incorrectos.";
+        error.classList.remove("oculto");
+        return;
+      }
+      el("clave").value = "";
+      mostrarApp();
+    });
+
+    el("cerrar-sesion").addEventListener("click", async function () {
+      if (!confirm("¿Cerrar sesión?")) return;
+      await db.auth.signOut();
+      pagos = [];
+      mostrarLogin();
+    });
+
+    // ---------- Lista de pagos ----------
+    async function cargarPagos() {
+      const info = el("estado-lista");
+      info.textContent = "Cargando...";
+      const res = await db.from("pagos").select("*").eq("activo", true)
+        .order("dia_pago", { ascending: true, nullsFirst: false })
+        .order("nombre", { ascending: true });
+
+      if (res.error) {
+        console.error(res.error);
+        info.textContent = "No se pudieron cargar tus pagos. ¿Ya corriste el SQL en Supabase?";
+        el("lista-pagos").innerHTML = "";
+        return;
+      }
+      pagos = res.data;
+      dibujar();
+    }
+
+    function dibujar() {
+      const totalViernes = pagos.reduce(function (s, p) { return s + p.apartar_viernes; }, 0);
+      const totalMes = pagos.reduce(function (s, p) { return s + p.monto_mensual; }, 0);
+      el("total-viernes").textContent = dinero(totalViernes);
+      el("total-mes").textContent = dinero(totalMes);
+
+      const info = el("estado-lista");
+      if (pagos.length === 0) {
+        info.textContent = "Todavía no tienes pagos. Agrega el primero abajo.";
+        el("lista-pagos").innerHTML = "";
+        return;
+      }
+      info.textContent = "";
+
+      el("lista-pagos").innerHTML = pagos.map(function (p) {
+        const dia = p.dia_pago ? " · día " + p.dia_pago : "";
+        const sacar = p.dia_sacar
+          ? '<br>Empiezas a sacar el dinero el día <strong>' + p.dia_sacar + '</strong>' + (p.mensaje_sacar ? ': «' + escapar(p.mensaje_sacar) + '»' : "")
+          : "";
+        let nota = "";
+        if (p.monto_mensual > 0 && p.apartar_viernes > 0) {
+          const junta = Math.round(p.apartar_viernes * VIERNES_POR_MES);
+          const falta = p.monto_mensual - junta;
+          nota = falta > 0
+            ? '<p class="pago-nota falta">Apartando eso juntas unos ' + dinero(junta) + ' al mes; te faltarían unos ' + dinero(falta) + '.</p>'
+            : '<p class="pago-nota">Apartando eso juntas unos ' + dinero(junta) + ' al mes: alcanza.</p>';
+        }
+        return `
+          <article class="caja">
+            <div class="pago-cab">
+              <strong>${escapar(p.nombre)}</strong>
+              <span>${p.monto_mensual > 0 ? dinero(p.monto_mensual) : "—"}</span>
+            </div>
+            <p class="pago-datos">
+              Pago mensual${dia}<br>
+              Apartar cada viernes: <strong>${dinero(p.apartar_viernes)}</strong>
+              ${sacar}
+            </p>
+            ${nota}
+            <div class="acciones">
+              <button class="mini" data-id="${escapar(p.id)}" data-accion="editar">Editar</button>
+              <button class="mini gris" data-id="${escapar(p.id)}" data-accion="borrar">Eliminar</button>
+            </div>
+          </article>`;
+      }).join("");
+    }
+
+    el("lista-pagos").addEventListener("click", async function (e) {
+      const b = e.target.closest("button[data-accion]");
+      if (!b) return;
+      const p = pagos.find(function (x) { return x.id === b.dataset.id; });
+      if (!p) return;
+
+      if (b.dataset.accion === "editar") {
+        editando = p.id;
+        el("pago-nombre").value = p.nombre;
+        el("pago-monto").value = p.monto_mensual || "";
+        el("pago-dia").value = p.dia_pago || "";
+        el("pago-viernes").value = p.apartar_viernes || "";
+        el("pago-sacar").value = p.dia_sacar || "";
+        el("pago-mensaje").value = p.mensaje_sacar || "";
+        el("titulo-form").textContent = "Editar: " + p.nombre;
+        el("boton-guardar").textContent = "Guardar cambios";
+        el("cancelar-edicion").classList.remove("oculto");
+        el("form-pago").scrollIntoView({ behavior: "smooth", block: "center" });
+        return;
+      }
+
+      if (!confirm("¿Eliminar \"" + p.nombre + "\"?")) return;
+      b.disabled = true;
+      const res = await db.from("pagos").delete().eq("id", p.id);
+      if (res.error) { console.error(res.error); alert("No se pudo eliminar."); }
+      if (editando === p.id) limpiarForm();
+      cargarPagos();
+    });
+
+    // ---------- Formulario ----------
+    function limpiarForm() {
+      editando = null;
+      el("form-pago").reset();
+      el("titulo-form").textContent = "Agregar un pago";
+      el("boton-guardar").textContent = "Guardar";
+      el("cancelar-edicion").classList.add("oculto");
+      el("error-pago").classList.add("oculto");
+    }
+
+    el("cancelar-edicion").addEventListener("click", limpiarForm);
+
+    el("form-pago").addEventListener("submit", async function (e) {
+      e.preventDefault();
+      const error = el("error-pago");
+      const nombre = el("pago-nombre").value.trim();
+      const monto = parseInt(el("pago-monto").value, 10) || 0;
+      const viernes = parseInt(el("pago-viernes").value, 10) || 0;
+      const diaTxt = el("pago-dia").value;
+      const dia = diaTxt === "" ? null : parseInt(diaTxt, 10);
+      const sacarTxt = el("pago-sacar").value;
+      const sacar = sacarTxt === "" ? null : parseInt(sacarTxt, 10);
+      const mensaje = el("pago-mensaje").value.trim();
+
+      function fallo(txt) { error.textContent = txt; error.classList.remove("oculto"); }
+
+      if (!nombre) return fallo("Escribe qué es el pago.");
+      if (monto === 0 && viernes === 0) return fallo("Pon cuánto pagas al mes o cuánto apartar cada viernes.");
+      if (monto > 0 && dia === null) return fallo("¿Qué día del mes lo pagas? Lo necesito para avisarte el día antes.");
+      if (dia !== null && (dia < 1 || dia > 31)) return fallo("El día de pago debe estar entre 1 y 31.");
+      if (sacar !== null && (sacar < 1 || sacar > 31)) return fallo("El día para sacar el dinero debe estar entre 1 y 31.");
+      if (mensaje && sacar === null) return fallo("Para usar tu mensaje, elige desde qué día quieres el aviso.");
+      error.classList.add("oculto");
+
+      const fila = { nombre: nombre, monto_mensual: monto, dia_pago: dia, apartar_viernes: viernes, dia_sacar: sacar, mensaje_sacar: mensaje || null };
+      const boton = el("boton-guardar");
+      boton.disabled = true;
+      const res = editando
+        ? await db.from("pagos").update(fila).eq("id", editando)
+        : await db.from("pagos").insert(fila);
+      boton.disabled = false;
+
+      if (res.error) {
+        console.error(res.error);
+        return fallo("No se pudo guardar. Intenta de nuevo.");
+      }
+      limpiarForm();
+      cargarPagos();
+    });
+
+    // ---------- Inicio ----------
+    (async function () {
+      const sesion = await db.auth.getSession();
+      if (sesion.data && sesion.data.session) {
+        mostrarApp();
+      } else {
+        mostrarLogin();
+      }
+    })();
+  </script>
+</body>
+</html>
