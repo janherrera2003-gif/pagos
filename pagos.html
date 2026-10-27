@@ -147,7 +147,9 @@
       font-size: 17px;
     }
 
-    .pago-cab span {
+    .pago-cab > span {
+      flex-shrink: 0;
+      white-space: nowrap;
       font-family: var(--serif);
       font-size: 19px;
       color: var(--dorado);
@@ -267,6 +269,101 @@
       color: #e08a82;
     }
 
+    .titulo-fila {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .titulo-fila h3 { margin: 0; }
+
+    .switch {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0;
+      font-size: 14px;
+      color: var(--texto);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .switch input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .pista {
+      position: relative;
+      width: 44px;
+      height: 26px;
+      border-radius: 13px;
+      background: #2a2d36;
+      border: 1px solid var(--borde);
+      transition: background 0.2s, border-color 0.2s;
+    }
+
+    .pista::after {
+      content: "";
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #8d919b;
+      transition: transform 0.2s, background 0.2s;
+    }
+
+    .switch input:checked + .pista {
+      background: rgba(201, 169, 110, 0.25);
+      border-color: var(--dorado);
+    }
+
+    .switch input:checked + .pista::after {
+      transform: translateX(18px);
+      background: var(--dorado);
+    }
+
+    .switch input:focus-visible + .pista {
+      outline: 2px solid var(--dorado);
+      outline-offset: 2px;
+    }
+
+    .bloque-personal {
+      margin: 4px 0 4px;
+      padding: 4px 16px 0;
+      border: 1px solid var(--borde);
+      border-radius: 14px;
+      background: rgba(201, 169, 110, 0.05);
+    }
+
+    .bloque-personal .ayuda {
+      margin: 0 0 14px;
+      font-size: 13px;
+      color: var(--suave);
+      line-height: 1.5;
+    }
+
+    .etiqueta-personal {
+      display: inline-block;
+      margin-left: 8px;
+      padding: 0 6px;
+      font-family: var(--sans);
+      font-weight: 500;
+      line-height: 1.5;
+      border: 1px solid var(--dorado);
+      border-radius: 10px;
+      font-size: 8px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--dorado);
+      vertical-align: middle;
+    }
+
     .nota-suave {
       margin: 24px 0 0;
       text-align: center;
@@ -330,13 +427,29 @@
         <div id="lista-pagos"></div>
 
         <div class="caja">
-          <h3 id="titulo-form">Agregar un pago</h3>
+          <div class="titulo-fila">
+            <h3 id="titulo-form">Agregar un pago</h3>
+            <label class="switch" for="pago-personalizar">
+              <span>Personalizar</span>
+              <input type="checkbox" id="pago-personalizar">
+              <span class="pista"></span>
+            </label>
+          </div>
           <form id="form-pago">
             <label for="pago-nombre">¿Qué es? (luz, alquiler, ahorro...)</label>
             <input type="text" id="pago-nombre" maxlength="40" autocomplete="off">
 
-            <label for="pago-semana">Cuánto apartas por semana (₡)</label>
+            <label for="pago-semana" id="etiqueta-semana">Cuánto apartas por semana (₡)</label>
             <input type="tel" id="pago-semana" inputmode="numeric" maxlength="9" placeholder="0" autocomplete="off">
+
+            <div id="bloque-personal" class="bloque-personal oculto">
+
+              <label for="pago-dia">Día del mes en que te llega el aviso</label>
+              <input type="tel" id="pago-dia" inputmode="numeric" maxlength="2" placeholder="Ej: 15" autocomplete="off">
+
+              <label for="pago-monto">Monto a pagar ese mes (₡)</label>
+              <input type="tel" id="pago-monto" inputmode="numeric" maxlength="9" placeholder="0" autocomplete="off">
+            </div>
 
             <p id="error-pago" class="error oculto"></p>
             <button type="submit" class="boton" id="boton-guardar">Guardar</button>
@@ -346,7 +459,7 @@
           </form>
         </div>
 
-        <p class="nota-suave">Cada jueves a las 7:00 p. m. te llega por Telegram cuánto sacar esa semana. El día 1 de cada mes te llega el total de las 4 semanas.</p>
+        <p class="nota-suave">Cada jueves a las 7:00 p. m. te llega por Telegram cuánto sacar esa semana. El día 1 de cada mes te llega el total de las 4 semanas. Los pagos personalizados tienen sus propios avisos.</p>
       </section>
 
       <div id="pie-sesion" class="oculto">
@@ -380,10 +493,25 @@
       return d.innerHTML;
     }
 
-    // Solo números enteros en el monto
-    el("pago-semana").addEventListener("input", function () {
-      this.value = this.value.replace(/\D/g, "").slice(0, 9);
-    });
+    // Solo números enteros en los montos y el día
+    function soloNumeros(id, largo) {
+      el(id).addEventListener("input", function () {
+        this.value = this.value.replace(/\D/g, "").slice(0, largo);
+      });
+    }
+    soloNumeros("pago-semana", 9);
+    soloNumeros("pago-monto", 9);
+    soloNumeros("pago-dia", 2);
+
+    // El switch "Personalizar" muestra u oculta los campos del aviso propio
+    function aplicarPersonalizar() {
+      const activo = el("pago-personalizar").checked;
+      el("bloque-personal").classList.toggle("oculto", !activo);
+      el("etiqueta-semana").textContent = activo
+        ? "Cuánto apartas por semana (₡) (opcional)"
+        : "Cuánto apartas por semana (₡)";
+    }
+    el("pago-personalizar").addEventListener("change", aplicarPersonalizar);
 
     function mostrarLogin() {
       el("vista-login").classList.remove("oculto");
@@ -442,8 +570,12 @@
 
     function dibujar() {
       const totalSemana = pagos.reduce(function (s, p) { return s + p.apartar_viernes; }, 0);
+      // Al mes: los generales suman 4 semanas; los personalizados tienen su propio monto mensual
+      const totalMes = pagos.reduce(function (s, p) {
+        return s + (p.personalizado ? p.monto_mensual : p.apartar_viernes * SEMANAS_POR_MES);
+      }, 0);
       el("total-semana").textContent = dinero(totalSemana);
-      el("total-mes").textContent = dinero(totalSemana * SEMANAS_POR_MES);
+      el("total-mes").textContent = dinero(totalMes);
 
       const info = el("estado-lista");
       if (pagos.length === 0) {
@@ -454,13 +586,20 @@
       info.textContent = "";
 
       el("lista-pagos").innerHTML = pagos.map(function (p) {
+        const etiqueta = p.personalizado ? '<span class="etiqueta-personal">Personalizado</span>' : "";
+        const semanal = p.apartar_viernes > 0
+          ? dinero(p.apartar_viernes) + ' <small style="font-size:12px;color:var(--suave)">/ semana</small>'
+          : '<small style="font-size:12px;color:var(--suave)">sin aviso semanal</small>';
+        const detalle = p.personalizado
+          ? 'Aviso mensual: día <strong>' + p.dia_pago + '</strong> · a pagar <strong>' + dinero(p.monto_mensual) + '</strong>'
+          : 'Al mes (4 semanas): <strong>' + dinero(p.apartar_viernes * SEMANAS_POR_MES) + '</strong>';
         return `
           <article class="caja">
             <div class="pago-cab">
-              <strong>${escapar(p.nombre)}</strong>
-              <span>${dinero(p.apartar_viernes)} <small style="font-size:12px;color:var(--suave)">/ semana</small></span>
+              <strong>${escapar(p.nombre)}${etiqueta}</strong>
+              <span>${semanal}</span>
             </div>
-            <p class="pago-datos">Al mes (4 semanas): <strong>${dinero(p.apartar_viernes * SEMANAS_POR_MES)}</strong></p>
+            <p class="pago-datos">${detalle}</p>
             <div class="acciones">
               <button class="mini" data-id="${escapar(p.id)}" data-accion="editar">Editar</button>
               <button class="mini gris" data-id="${escapar(p.id)}" data-accion="borrar">Eliminar</button>
@@ -479,6 +618,10 @@
         editando = p.id;
         el("pago-nombre").value = p.nombre;
         el("pago-semana").value = p.apartar_viernes || "";
+        el("pago-personalizar").checked = !!p.personalizado;
+        el("pago-dia").value = p.personalizado && p.dia_pago ? p.dia_pago : "";
+        el("pago-monto").value = p.personalizado && p.monto_mensual ? p.monto_mensual : "";
+        aplicarPersonalizar();
         el("titulo-form").textContent = "Editar: " + p.nombre;
         el("boton-guardar").textContent = "Guardar cambios";
         el("cancelar-edicion").classList.remove("oculto");
@@ -498,6 +641,8 @@
     function limpiarForm() {
       editando = null;
       el("form-pago").reset();
+      el("pago-personalizar").checked = false;
+      aplicarPersonalizar();
       el("titulo-form").textContent = "Agregar un pago";
       el("boton-guardar").textContent = "Guardar";
       el("cancelar-edicion").classList.add("oculto");
@@ -511,14 +656,24 @@
       const error = el("error-pago");
       const nombre = el("pago-nombre").value.trim();
       const semana = parseInt(el("pago-semana").value, 10) || 0;
+      const personalizado = el("pago-personalizar").checked;
+      const diaTxt = el("pago-dia").value;
+      const dia = diaTxt === "" ? null : parseInt(diaTxt, 10);
+      const monto = parseInt(el("pago-monto").value, 10) || 0;
 
       function fallo(txt) { error.textContent = txt; error.classList.remove("oculto"); }
 
       if (!nombre) return fallo("Escribe qué es el pago.");
-      if (semana <= 0) return fallo("Escribe cuánto apartas por semana.");
+      if (!personalizado && semana <= 0) return fallo("Escribe cuánto apartas por semana.");
+      if (personalizado) {
+        if (dia === null || dia < 1 || dia > 31) return fallo("Escribe el día del mes del aviso (entre 1 y 31).");
+        if (monto <= 0) return fallo("Escribe el monto a pagar ese mes.");
+      }
       error.classList.add("oculto");
 
-      const fila = { nombre: nombre, apartar_viernes: semana, monto_mensual: 0, dia_pago: null, dia_sacar: null, mensaje_sacar: null };
+      const fila = personalizado
+        ? { nombre: nombre, apartar_viernes: semana, monto_mensual: monto, dia_pago: dia, personalizado: true, dia_sacar: null, mensaje_sacar: null }
+        : { nombre: nombre, apartar_viernes: semana, monto_mensual: 0, dia_pago: null, personalizado: false, dia_sacar: null, mensaje_sacar: null };
       const boton = el("boton-guardar");
       boton.disabled = true;
       const res = editando
