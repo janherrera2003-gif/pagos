@@ -586,7 +586,13 @@
       }
       info.textContent = "";
 
-      el("lista-pagos").innerHTML = pagos.map(function (p) {
+      // Del monto dorado más barato al más caro (mensual si es personalizado, semanal si no)
+      const montoDorado = (p) => p.personalizado ? Number(p.monto_mensual) : Number(p.apartar_viernes);
+      const ordenados = pagos.slice().sort(function (x, y) {
+        return montoDorado(x) - montoDorado(y) || x.nombre.localeCompare(y.nombre, "es");
+      });
+
+      el("lista-pagos").innerHTML = ordenados.map(function (p) {
         const etiqueta = p.personalizado ? '<span class="etiqueta-personal">Personalizado</span>' : "";
         const peq = (t) => ' <small style="font-size:12px;color:var(--suave)">' + t + '</small>';
         const semanal = p.personalizado
